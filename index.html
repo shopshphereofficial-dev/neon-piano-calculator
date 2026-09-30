@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Neon Piano & Calculator</title>
+  <style>
+    :root {
+      --bg: #0b0b1a;
+      --card: rgba(18, 18, 38, 0.75);
+      --cyan: #00f3ff;
+      --magenta: #ff007f;
+      --lime: #39ff14;
+      --orange: #ff8c00;
+      --violet: #b026ff;
+      --white: #f5f5ff;
+      --text-dim: #7f86a8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: radial-gradient(circle at 50% 20%, #171738 0%, var(--bg) 80%);
+      color: var(--white);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 16px 12px;
+      overflow-x: hidden;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    /* App Header */
+    .app-header {
+      text-align: center;
+      margin-top: 4px;
+    }
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--lime));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.4));
+    }
+    /* Tab Switcher */
+    .tab-bar {
+      display: flex;
+      background: rgba(15, 15, 35, 0.8);
+      backdrop-filter: blur(12px);
+      padding: 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      border: none;
+      background: transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 1px;
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.25), rgba(176, 38, 255, 0.25));
+      border: 1px solid var(--cyan);
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.5);
+    }
+    /* View Containers */
+    .view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+    .view.active {
+      display: flex;
+    }
+    /* Glass Card */
+    .glass-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+    }
+    /* PIANO STYLES */
+    .piano-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ctrl-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--white);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .ctrl-btn:active {
+      transform: scale(0.95);
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+    .waveform-select {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--cyan);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .record-strip {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .rec-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+    .rec-btn.record {
+      background: rgba(255, 0, 127, 0.15);
+      color: var(--magenta);
+      border: 1px solid var(--magenta);
+    }
+    .rec-btn.record.recording {
+      background: var(--magenta);
+      color: #fff;
+      box-shadow: 0 0 14px var(--magenta);
+      animation: pulse 1.2s infinite;
+    }
+    .rec-btn.play {
+      background: rgba(57, 255, 20, 0.15);
+      color: var(--lime);
+      border: 1px solid var(--lime);
+    }
+    .rec-btn.play:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .rec-btn.play.playing {
+      background: var(--lime);
+      color: #0b0b1a;
+      box-shadow: 0 0 14px var(--lime);
+    }
+    /* Piano Keyboard Area */
+    .piano-board {
+      position: relative;
+      height: 230px;
+      width: 100%;
+      display: flex;
+      background: rgba(5, 5, 15, 0.7);
+      border-radius: 14px;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      touch-action: none;
+      overflow: hidden;
+    }
+    .white-keys {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      gap: 4px;
+    }
+    .piano-key {
+      cursor: pointer;
+      border-radius: 0 0 8px 8px;
+      transition: background 0.1s, box-shadow 0.1s, transform 0.08s;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .piano-key.white {
+      flex: 1;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid var(--cyan);
+      color: var(--cyan);
+      box-shadow: inset 0 -6px 12px rgba(0, 243, 255, 0.1), 0 0 6px rgba(0, 243, 255, 0.2);
+    }
+    .piano-key.white.active {
+      background: var(--cyan);
+      color: #0b0b1a;
+      box-shadow: 0 0 25px var(--cyan), inset 0 0 15px rgba(255, 255, 255, 0.8);
+      transform: translateY(3px);
+    }
+    .black-keys {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      height: 60%;
+      pointer-events: none;
+    }
+    .piano-key.black {
+      position: absolute;
+      width: 8.5%;
+      height: 100%;
+      pointer-events: auto;
+      background: #110519;
+      border: 1.5px solid var(--magenta);
+      color: var(--magenta);
+      border-radius: 0 0 6px 6px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), 0 0 8px rgba(255, 0, 127, 0.4);
+      z-index: 5;
+    }
+    .piano-key.black.active {
+      background: var(--magenta);
+      color: #fff;
+      box-shadow: 0 0 25px var(--magenta), inset 0 0 10px #fff;
+      transform: translateY(3px);
+    }
+    /* CALCULATOR STYLES */
+    .calc-screen {
+      background: rgba(5, 5, 18, 0.85);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 243, 255, 0.15);
+      text-align: right;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      word-break: break-all;
+    }
+    .calc-expr {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      min-height: 20px;
+      letter-spacing: 1px;
+    }
+    .calc-ans {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 12px var(--cyan);
+      line-height: 1.1;
+    }
+    .calc-ans.error {
+      color: var(--magenta) !important;
+      text-shadow: 0 0 15px var(--magenta) !important;
+      font-size: 1.3rem;
+    }
+    .calc-pad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .btn {
+      aspect-ratio: 1 / 0.85;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--white);
+      font-size: 1.3rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.93);
+    }
+    .btn.num {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .btn.num:active {
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    }
+    .btn.op {
+      color: var(--lime);
+      border-color: rgba(57, 255, 20, 0.35);
+      box-shadow: 0 0 8px rgba(57, 255, 20, 0.15);
+    }
+    .btn.op:active {
+      background: rgba(57, 255, 20, 0.25);
+      box-shadow: 0 0 20px var(--lime);
+    }
+    .btn.func {
+      color: var(--orange);
+      border-color: rgba(255, 140, 0, 0.35);
+    }
+    .btn.func:active {
+      background: rgba(255, 140, 0, 0.25);
+      box-shadow: 0 0 20px var(--orange);
+    }
+    .btn.clear {
+      color: var(--magenta);
+      border-color: rgba(255, 0, 127, 0.4);
+    }
+    .btn.clear:active {
+      background: rgba(255, 0, 127, 0.25);
+      box-shadow: 0 0 20px var(--magenta);
+    }
+    .btn.equal {
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #0b0b1a;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+    }
+    .btn.equal:active {
+      box-shadow: 0 0 25px var(--cyan);
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <h1 class="app-title">Neon Synthetics</h1>
+    </header>
+
+    <!-- Tab Bar -->
+    <nav class="tab-bar">
+      <button id="tabPiano" class="tab-btn active" onclick="switchTab('piano')">Piano</button>
+      <button id="tabCalc" class="tab-btn" onclick="switchTab('calc')">Calculator</button>
+    </nav>
+
+    <!-- Piano View -->
+    <main id="viewPiano" class="view active">
+      <section class="glass-card">
+        <div class="piano-controls">
+          <div class="ctrl-group">
+            <span class="ctrl-label">Wave:</span>
+            <select id="waveform" class="waveform-select">
+              <option value="sine">Sine</option>
+              <option value="triangle" selected>Triangle</option>
+              <option value="square">Square</option>
+            </select>
+          </div>
+          <div class="ctrl-group">
+            <button class="ctrl-btn" onclick="changeOctave(-1)">- Oct</button>
+            <span id="octaveDisplay" style="font-weight:700; color:var(--cyan); min-width:24px; text-align:center;">4</span>
+            <button class="ctrl-btn" onclick="changeOctave(1)">+ Oct</button>
+          </div>
+        </div>
+
+        <!-- Record/Play Strip -->
+        <div class="record-strip" style="margin-top: 12px;">
+          <button id="recBtn" class="rec-btn record" onclick="toggleRecord()">● Record</button>
+          <button id="playBtn" class="rec-btn play" onclick="playRecording()" disabled>▶ Play</button>
+          <span id="recStatus" style="font-size:0.75rem; color:var(--text-dim);">Ready</span>
+        </div>
+
+        <!-- Piano Keyboard -->
+        <div class="piano-board" id="pianoBoard" style="margin-top: 12px;">
+          <div class="white-keys">
+            <div class="piano-key white" data-note="0"><span>C</span></div>
+            <div class="piano-key white" data-note="2"><span>D</span></div>
+            <div class="piano-key white" data-note="4"><span>E</span></div>
+            <div class="piano-key white" data-note="5"><span>F</span></div>
+            <div class="piano-key white" data-note="7"><span>G</span></div>
+            <div class="piano-key white" data-note="9"><span>A</span></div>
+            <div class="piano-key white" data-note="11"><span>B</span></div>
+            <div class="piano-key white" data-note="12"><span>C</span></div>
+          </div>
+          <div class="black-keys">
+            <div class="piano-key black" data-note="1" style="left: 8.5%;"><span>C#</span></div>
+            <div class="piano-key black" data-note="3" style="left: 21%;"><span>D#</span></div>
+            <div class="piano-key black" data-note="6" style="left: 46%;"><span>F#</span></div>
+            <div class="piano-key black" data-note="8" style="left: 58.5%;"><span>G#</span></div>
+            <div class="piano-key black" data-note="10" style="left: 71%;"><span>A#</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Calculator View -->
+    <main id="viewCalc" class="view">
+      <section class="glass-card">
+        <div class="calc-screen">
+          <div id="calcExpr" class="calc-expr"></div>
+          <div id="calcAns" class="calc-ans">0</div>
+        </div>
+        <div class="calc-pad">
+          <button class="btn clear" onclick="calcInput('clear')">AC</button>
+          <button class="btn clear" onclick="calcInput('backspace')">⌫</button>
+          <button class="btn func" onclick="calcInput('percent')">%</button>
+          <button class="btn op" onclick="calcInput('/')">÷</button>
+
+          <button class="btn num" onclick="calcInput('7')">7</button>
+          <button class="btn num" onclick="calcInput('8')">8</button>
+          <button class="btn num" onclick="calcInput('9')">9</button>
+          <button class="btn op" onclick="calcInput('*')">×</button>
+
+          <button class="btn num" onclick="calcInput('4')">4</button>
+          <button class="btn num" onclick="calcInput('5')">5</button>
+          <button class="btn num" onclick="calcInput('6')">6</button>
+          <button class="btn op" onclick="calcInput('-')">−</button>
+
+          <button class="btn num" onclick="calcInput('1')">1</button>
+          <button class="btn num" onclick="calcInput('2')">2</button>
+          <button class="btn num" onclick="calcInput('3')">3</button>
+          <button class="btn op" onclick="calcInput('+')">+</button>
+
+          <button class="btn func" onclick="calcInput('plusminus')">±</button>
+          <button class="btn num" onclick="calcInput('0')">0</button>
+          <button class="btn num" onclick="calcInput('.')">.</button>
+          <button class="btn equal" onclick="calcInput('equals')">=</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    /* TAB NAVIGATION */
+    function switchTab(name) {
+      document.getElementById('tabPiano').classList.toggle('active', name === 'piano');
+      document.getElementById('tabCalc').classList.toggle('active', name === 'calc');
+      document.getElementById('viewPiano').classList.toggle('active', name === 'piano');
+      document.getElementById('viewCalc').classList.toggle('active', name === 'calc');
+    }
+
+    /* AUDIO SYNTHESIZER */
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    let currentOctave = 4;
+    const activeNotes = {};
+    let isRecording = false;
+    let recordedEvents = [];
+    let recStartTime = 0;
+    let isPlayingBack = false;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function changeOctave(delta) {
+      currentOctave = Math.max(2, Math.min(6, currentOctave + delta));
+      document.getElementById('octaveDisplay').textContent = currentOctave;
+    }
+
+    function startNote(noteIdx) {
+      const ctx = getAudioContext();
+      if (activeNotes[noteIdx]) return;
+
+      const wave = document.getElementById('waveform').value;
+      const freq = 440 * Math.pow(2, (noteIdx - 9 + (currentOctave - 4) * 12) / 12);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = wave;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.02);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+
+      activeNotes[noteIdx] = { osc, gain };
+
+      const keyEl = document.querySelector(`.piano-key[data-note="${noteIdx}"]`);
+      if (keyEl) keyEl.classList.add('active');
+
+      if (isRecording) {
+        recordedEvents.push({ type: 'down', note: noteIdx, time: performance.now() - recStartTime });
+      }
+    }
+
+    function stopNote(noteIdx) {
+      if (!activeNotes[noteIdx]) return;
+      const { osc, gain } = activeNotes[noteIdx];
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      setTimeout(() => {
+        try { osc.stop(); osc.disconnect(); } catch (e) {}
+      }, 140);
+
+      delete activeNotes[noteIdx];
+
+      const keyEl = document.querySelector(`.piano-key[data-note="${noteIdx}"]`);
+      if (keyEl) keyEl.classList.remove('active');
+
+      if (isRecording) {
+        recordedEvents.push({ type: 'up', note: noteIdx, time: performance.now() - recStartTime });
+      }
+    }
+
+    /* TOUCH / MOUSE HANDLING */
+    const pianoBoard = document.getElementById('pianoBoard');
+    const pointerMap = {};
+
+    pianoBoard.addEventListener('pointerdown', (e) => {
+      const key = e.target.closest('.piano-key');
+      if (!key) return;
+      const note = parseInt(key.getAttribute('data-note'), 10);
+      pointerMap[e.pointerId] = note;
+      startNote(note);
+      e.preventDefault();
+    });
+
+    pianoBoard.addEventListener('pointerup', (e) => {
+      if (pointerMap[e.pointerId] !== undefined) {
+        stopNote(pointerMap[e.pointerId]);
+        delete pointerMap[e.pointerId];
+      }
+    });
+
+    pianoBoard.addEventListener('pointercancel', (e) => {
+      if (pointerMap[e.pointerId] !== undefined) {
+        stopNote(pointerMap[e.pointerId]);
+        delete pointerMap[e.pointerId];
+      }
+    });
+
+    /* RECORD & PLAY */
+    function toggleRecord() {
+      const recBtn = document.getElementById('recBtn');
+      const playBtn = document.getElementById('playBtn');
+      const status = document.getElementById('recStatus');
+
+      if (!isRecording) {
+        isRecording = true;
+        recordedEvents = [];
+        recStartTime = performance.now();
+        recBtn.classList.add('recording');
+        recBtn.textContent = '■ Stop';
+        playBtn.disabled = true;
+        status.textContent = 'Recording...';
+      } else {
+        isRecording = false;
+        recBtn.classList.remove('recording');
+        recBtn.textContent = '● Record';
+        playBtn.disabled = recordedEvents.length === 0;
+        status.textContent = recordedEvents.length ? `${Math.round(recordedEvents[recordedEvents.length - 1].time / 100) / 10}s recorded` : 'Empty';
+      }
+    }
+
+    function playRecording() {
+      if (isPlayingBack || recordedEvents.length === 0) return;
+      isPlayingBack = true;
+      const playBtn = document.getElementById('playBtn');
+      const status = document.getElementById('recStatus');
+      playBtn.classList.add('playing');
+      status.textContent = 'Playing...';
+
+      recordedEvents.forEach((ev) => {
+        setTimeout(() => {
+          if (ev.type === 'down') startNote(ev.note);
+          else stopNote(ev.note);
+        }, ev.time);
+      });
+
+      const totalTime = recordedEvents[recordedEvents.length - 1].time + 300;
+      setTimeout(() => {
+        isPlayingBack = false;
+        playBtn.classList.remove('playing');
+        status.textContent = 'Done';
+      }, totalTime);
+    }
+
+    /* CALCULATOR ENGINE */
+    let calcExpression = '';
+    let calcCurrent = '0';
+    let shouldResetInput = false;
+
+    const exprEl = document.getElementById('calcExpr');
+    const ansEl = document.getElementById('calcAns');
+
+    function calcInput(val) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(12); } catch (e) {}
+      }
+      ansEl.classList.remove('error');
+
+      if (val === 'clear') {
+        calcExpression = '';
+        calcCurrent = '0';
+        shouldResetInput = false;
+      } else if (val === 'backspace') {
+        if (calcCurrent.length > 1) {
+          calcCurrent = calcCurrent.slice(0, -1);
+        } else {
+          calcCurrent = '0';
+        }
+      } else if (val === 'plusminus') {
+        if (calcCurrent !== '0' && calcCurrent !== 'Error') {
+          calcCurrent = calcCurrent.startsWith('-') ? calcCurrent.slice(1) : '-' + calcCurrent;
+        }
+      } else if (val === 'percent') {
+        const num = parseFloat(calcCurrent);
+        if (!isNaN(num)) calcCurrent = String(num / 100);
+      } else if (['+', '-', '*', '/'].includes(val)) {
+        calcExpression = `${calcCurrent} ${val}`;
+        shouldResetInput = true;
+      } else if (val === 'equals') {
+        if (calcExpression && !calcExpression.includes('=')) {
+          const parts = calcExpression.split(' ');
+          const op = parts[1];
+          const a = parseFloat(parts[0]);
+          const b = parseFloat(calcCurrent);
+          let res = 0;
+
+          if (op === '/' && b === 0) {
+            calcAns.textContent = 'Error: Division by 0';
+            calcAns.classList.add('error');
+            calcExpression = '';
+            calcCurrent = '0';
+            return;
+          }
+
+          if (op === '+') res = a + b;
+          else if (op === '-') res = a - b;
+          else if (op === '*') res = a * b;
+          else if (op === '/') res = a / b;
+
+          res = Math.round(res * 100000000) / 100000000;
+          calcExpression = `${a} ${op} ${b} =`;
+          calcCurrent = String(res);
+          shouldResetInput = true;
+        }
+      } else {
+        if (calcCurrent === '0' || shouldResetInput) {
+          calcCurrent = val === '.' ? '0.' : val;
+          shouldResetInput = false;
+        } else {
+          if (val === '.' && calcCurrent.includes('.')) return;
+          calcCurrent += val;
+        }
+      }
+
+      exprEl.textContent = calcExpression;
+      ansEl.textContent = calcCurrent;
+    }
+
+    /* DESKTOP KEYBOARD LISTENERS */
+    window.addEventListener('keydown', (e) => {
+      const viewCalc = document.getElementById('viewCalc');
+      if (viewCalc.classList.contains('active')) {
+        if ((e.key >= '0' && e.key <= '9') || e.key === '.') calcInput(e.key);
+        else if (['+', '-', '*', '/'].includes(e.key)) calcInput(e.key);
+        else if (e.key === 'Enter' || e.key === '=') calcInput('equals');
+        else if (e.key === 'Backspace') calcInput('backspace');
+        else if (e.key === 'Escape') calcInput('clear');
+      }
+    });
+  </script>
+</body>
+</html>
