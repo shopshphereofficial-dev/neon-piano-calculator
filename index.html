@@ -1,718 +1,748 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Neon Piano & Calculator</title>
-  <style>
-    :root {
-      --bg: #0b0b1a;
-      --card: rgba(18, 18, 38, 0.75);
-      --cyan: #00f3ff;
-      --magenta: #ff007f;
-      --lime: #39ff14;
-      --orange: #ff8c00;
-      --violet: #b026ff;
-      --white: #f5f5ff;
-      --text-dim: #7f86a8;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body {
-      background: radial-gradient(circle at 50% 20%, #171738 0%, var(--bg) 80%);
-      color: var(--white);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 16px 12px;
-      overflow-x: hidden;
-    }
-    .container {
-      width: 100%;
-      max-width: 440px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    /* App Header */
-    .app-header {
-      text-align: center;
-      margin-top: 4px;
-    }
-    .app-title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, var(--cyan), var(--magenta), var(--lime));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.4));
-    }
-    /* Tab Switcher */
-    .tab-bar {
-      display: flex;
-      background: rgba(15, 15, 35, 0.8);
-      backdrop-filter: blur(12px);
-      padding: 5px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 10px 16px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-dim);
-      border: none;
-      background: transparent;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      letter-spacing: 1px;
-    }
-    .tab-btn.active {
-      color: #fff;
-      background: linear-gradient(135deg, rgba(0, 243, 255, 0.25), rgba(176, 38, 255, 0.25));
-      border: 1px solid var(--cyan);
-      box-shadow: 0 0 14px rgba(0, 243, 255, 0.5);
-    }
-    /* View Containers */
-    .view {
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-      width: 100%;
-    }
-    .view.active {
-      display: flex;
-    }
-    /* Glass Card */
-    .glass-card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(16px);
-    }
-    /* PIANO STYLES */
-    .piano-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .ctrl-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .ctrl-label {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .ctrl-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--white);
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .ctrl-btn:active {
-      transform: scale(0.95);
-      border-color: var(--cyan);
-      box-shadow: 0 0 10px var(--cyan);
-    }
-    .waveform-select {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: var(--cyan);
-      padding: 6px 10px;
-      border-radius: 10px;
-      font-size: 0.82rem;
-      outline: none;
-    }
-    .record-strip {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 12px;
-      background: rgba(0, 0, 0, 0.35);
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .rec-btn {
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: 0.2s;
-    }
-    .rec-btn.record {
-      background: rgba(255, 0, 127, 0.15);
-      color: var(--magenta);
-      border: 1px solid var(--magenta);
-    }
-    .rec-btn.record.recording {
-      background: var(--magenta);
-      color: #fff;
-      box-shadow: 0 0 14px var(--magenta);
-      animation: pulse 1.2s infinite;
-    }
-    .rec-btn.play {
-      background: rgba(57, 255, 20, 0.15);
-      color: var(--lime);
-      border: 1px solid var(--lime);
-    }
-    .rec-btn.play:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
-    }
-    .rec-btn.play.playing {
-      background: var(--lime);
-      color: #0b0b1a;
-      box-shadow: 0 0 14px var(--lime);
-    }
-    /* Piano Keyboard Area */
-    .piano-board {
-      position: relative;
-      height: 230px;
-      width: 100%;
-      display: flex;
-      background: rgba(5, 5, 15, 0.7);
-      border-radius: 14px;
-      padding: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      touch-action: none;
-      overflow: hidden;
-    }
-    .white-keys {
-      display: flex;
-      width: 100%;
-      height: 100%;
-      gap: 4px;
-    }
-    .piano-key {
-      cursor: pointer;
-      border-radius: 0 0 8px 8px;
-      transition: background 0.1s, box-shadow 0.1s, transform 0.08s;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-    .piano-key.white {
-      flex: 1;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1.5px solid var(--cyan);
-      color: var(--cyan);
-      box-shadow: inset 0 -6px 12px rgba(0, 243, 255, 0.1), 0 0 6px rgba(0, 243, 255, 0.2);
-    }
-    .piano-key.white.active {
-      background: var(--cyan);
-      color: #0b0b1a;
-      box-shadow: 0 0 25px var(--cyan), inset 0 0 15px rgba(255, 255, 255, 0.8);
-      transform: translateY(3px);
-    }
-    .black-keys {
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      right: 4px;
-      height: 60%;
-      pointer-events: none;
-    }
-    .piano-key.black {
-      position: absolute;
-      width: 8.5%;
-      height: 100%;
-      pointer-events: auto;
-      background: #110519;
-      border: 1.5px solid var(--magenta);
-      color: var(--magenta);
-      border-radius: 0 0 6px 6px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8), 0 0 8px rgba(255, 0, 127, 0.4);
-      z-index: 5;
-    }
-    .piano-key.black.active {
-      background: var(--magenta);
-      color: #fff;
-      box-shadow: 0 0 25px var(--magenta), inset 0 0 10px #fff;
-      transform: translateY(3px);
-    }
-    /* CALCULATOR STYLES */
-    .calc-screen {
-      background: rgba(5, 5, 18, 0.85);
-      border-radius: 16px;
-      padding: 16px;
-      border: 1px solid rgba(0, 243, 255, 0.25);
-      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 243, 255, 0.15);
-      text-align: right;
-      min-height: 90px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      word-break: break-all;
-    }
-    .calc-expr {
-      font-size: 0.95rem;
-      color: var(--text-dim);
-      min-height: 20px;
-      letter-spacing: 1px;
-    }
-    .calc-ans {
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--cyan);
-      text-shadow: 0 0 12px var(--cyan);
-      line-height: 1.1;
-    }
-    .calc-ans.error {
-      color: var(--magenta) !important;
-      text-shadow: 0 0 15px var(--magenta) !important;
-      font-size: 1.3rem;
-    }
-    .calc-pad {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .btn {
-      aspect-ratio: 1 / 0.85;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--white);
-      font-size: 1.3rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.1s, box-shadow 0.2s, background 0.2s;
-    }
-    .btn:active {
-      transform: scale(0.93);
-    }
-    .btn.num {
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-    .btn.num:active {
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    }
-    .btn.op {
-      color: var(--lime);
-      border-color: rgba(57, 255, 20, 0.35);
-      box-shadow: 0 0 8px rgba(57, 255, 20, 0.15);
-    }
-    .btn.op:active {
-      background: rgba(57, 255, 20, 0.25);
-      box-shadow: 0 0 20px var(--lime);
-    }
-    .btn.func {
-      color: var(--orange);
-      border-color: rgba(255, 140, 0, 0.35);
-    }
-    .btn.func:active {
-      background: rgba(255, 140, 0, 0.25);
-      box-shadow: 0 0 20px var(--orange);
-    }
-    .btn.clear {
-      color: var(--magenta);
-      border-color: rgba(255, 0, 127, 0.4);
-    }
-    .btn.clear:active {
-      background: rgba(255, 0, 127, 0.25);
-      box-shadow: 0 0 20px var(--magenta);
-    }
-    .btn.equal {
-      background: linear-gradient(135deg, var(--cyan), var(--violet));
-      color: #0b0b1a;
-      font-weight: 800;
-      border: none;
-      box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
-    }
-    .btn.equal:active {
-      box-shadow: 0 0 25px var(--cyan);
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.8; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Neon Piano & Calculator</title>
+<style>
+  :root {
+    --bg: #0b0b1a;
+    --cyan: #00f3ff;
+    --magenta: #ff007f;
+    --lime: #39ff14;
+    --orange: #ff7700;
+    --violet: #b026ff;
+    --glass: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.12);
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  body {
+    background: radial-gradient(circle at 50% 10%, #1e113a, var(--bg) 75%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 12px;
+  }
+  .container {
+    width: 100%;
+    max-width: 480px;
+    background: rgba(15, 15, 35, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.03);
+    display: flex;
+    flex-direction: column;
+  }
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 5px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #8a8aa8;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .tab-btn.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.35);
+    border: 1px solid var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.25s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Neon Button Base */
+  .btn {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: transform 0.08s ease, box-shadow 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active {
+    transform: scale(0.95);
+  }
+
+  /* PIANO STYLES */
+  .piano-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+    justify-content: space-between;
+  }
+  .pill-group {
+    display: flex;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .pill-btn {
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .pill-btn.active {
+    background: rgba(0, 243, 255, 0.2);
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+  }
+  .oct-btn {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--lime);
+    border: 1px solid var(--lime);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+  }
+  .oct-btn:active { transform: scale(0.92); }
+  .record-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+  }
+  .rec-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 1px solid var(--magenta);
+    background: rgba(255, 0, 127, 0.15);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.3);
+  }
+  .rec-btn.recording {
+    background: var(--magenta);
+    animation: pulseRed 1s infinite alternate;
+  }
+  @keyframes pulseRed {
+    from { box-shadow: 0 0 6px var(--magenta); }
+    to { box-shadow: 0 0 18px var(--magenta); }
+  }
+  .play-seq-btn {
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: bold;
+    border: 1px solid var(--orange);
+    background: rgba(255, 119, 0, 0.15);
+    color: var(--orange);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 119, 0, 0.3);
+  }
+  .play-seq-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .piano-wrap {
+    position: relative;
+    height: 220px;
+    width: 100%;
+    border-radius: 16px;
+    padding: 4px;
+    background: #050510;
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 243, 255, 0.15);
+    overflow: hidden;
+    touch-action: none;
+  }
+  .white-keys {
+    display: flex;
+    height: 100%;
+    width: 100%;
+  }
+  .key-white {
+    flex: 1;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--cyan);
+    border-radius: 0 0 8px 8px;
+    margin: 0 1.5px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--cyan);
+    box-shadow: inset 0 0 8px rgba(0, 243, 255, 0.25), 0 0 6px rgba(0, 243, 255, 0.2);
+    transition: background 0.05s, box-shadow 0.05s, transform 0.05s;
+    position: relative;
+  }
+  .key-white.active {
+    background: var(--cyan);
+    color: #000;
+    box-shadow: 0 0 25px var(--cyan), inset 0 0 10px #fff;
+    transform: scale(0.98);
+  }
+  .black-keys {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    height: 60%;
+    pointer-events: none;
+  }
+  .key-black {
+    position: absolute;
+    width: 7.5%;
+    height: 100%;
+    background: #200020;
+    border: 2px solid var(--magenta);
+    border-radius: 0 0 6px 6px;
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffb3db;
+    box-shadow: 0 0 12px rgba(255, 0, 127, 0.5), inset 0 0 6px var(--magenta);
+    transition: background 0.05s, box-shadow 0.05s, transform 0.05s;
+  }
+  .key-black.active {
+    background: var(--magenta);
+    color: #fff;
+    box-shadow: 0 0 25px var(--magenta), 0 0 40px var(--magenta);
+    transform: scale(0.96);
+  }
+
+  /* CALCULATOR STYLES */
+  .calc-display {
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(176, 38, 255, 0.4);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9), 0 0 15px rgba(176, 38, 255, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .calc-expr {
+    font-size: 15px;
+    color: #8c8caa;
+    min-height: 20px;
+    word-break: break-all;
+  }
+  .calc-val {
+    font-size: 36px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 12px var(--cyan);
+    word-break: break-all;
+  }
+  .calc-val.error {
+    color: var(--magenta);
+    text-shadow: 0 0 14px var(--magenta);
+    font-size: 26px;
+  }
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .calc-btn {
+    aspect-ratio: 1.15;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #eee;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+  }
+  .calc-btn.op {
+    color: var(--cyan);
+    border-color: rgba(0, 243, 255, 0.35);
+    box-shadow: 0 0 8px rgba(0, 243, 255, 0.15);
+  }
+  .calc-btn.action {
+    color: var(--orange);
+    border-color: rgba(255, 119, 0, 0.35);
+    box-shadow: 0 0 8px rgba(255, 119, 0, 0.15);
+  }
+  .calc-btn.eq {
+    color: #fff;
+    background: rgba(57, 255, 20, 0.2);
+    border-color: var(--lime);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+    font-size: 24px;
+  }
+  .calc-btn.clear {
+    color: var(--magenta);
+    border-color: rgba(255, 0, 127, 0.4);
+    box-shadow: 0 0 10px rgba(255, 0, 127, 0.2);
+  }
+  .calc-btn:active {
+    box-shadow: 0 0 16px currentColor;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header class="app-header">
-      <h1 class="app-title">Neon Synthetics</h1>
-    </header>
 
-    <!-- Tab Bar -->
-    <nav class="tab-bar">
-      <button id="tabPiano" class="tab-btn active" onclick="switchTab('piano')">Piano</button>
-      <button id="tabCalc" class="tab-btn" onclick="switchTab('calc')">Calculator</button>
-    </nav>
-
-    <!-- Piano View -->
-    <main id="viewPiano" class="view active">
-      <section class="glass-card">
-        <div class="piano-controls">
-          <div class="ctrl-group">
-            <span class="ctrl-label">Wave:</span>
-            <select id="waveform" class="waveform-select">
-              <option value="sine">Sine</option>
-              <option value="triangle" selected>Triangle</option>
-              <option value="square">Square</option>
-            </select>
-          </div>
-          <div class="ctrl-group">
-            <button class="ctrl-btn" onclick="changeOctave(-1)">- Oct</button>
-            <span id="octaveDisplay" style="font-weight:700; color:var(--cyan); min-width:24px; text-align:center;">4</span>
-            <button class="ctrl-btn" onclick="changeOctave(1)">+ Oct</button>
-          </div>
-        </div>
-
-        <!-- Record/Play Strip -->
-        <div class="record-strip" style="margin-top: 12px;">
-          <button id="recBtn" class="rec-btn record" onclick="toggleRecord()">● Record</button>
-          <button id="playBtn" class="rec-btn play" onclick="playRecording()" disabled>▶ Play</button>
-          <span id="recStatus" style="font-size:0.75rem; color:var(--text-dim);">Ready</span>
-        </div>
-
-        <!-- Piano Keyboard -->
-        <div class="piano-board" id="pianoBoard" style="margin-top: 12px;">
-          <div class="white-keys">
-            <div class="piano-key white" data-note="0"><span>C</span></div>
-            <div class="piano-key white" data-note="2"><span>D</span></div>
-            <div class="piano-key white" data-note="4"><span>E</span></div>
-            <div class="piano-key white" data-note="5"><span>F</span></div>
-            <div class="piano-key white" data-note="7"><span>G</span></div>
-            <div class="piano-key white" data-note="9"><span>A</span></div>
-            <div class="piano-key white" data-note="11"><span>B</span></div>
-            <div class="piano-key white" data-note="12"><span>C</span></div>
-          </div>
-          <div class="black-keys">
-            <div class="piano-key black" data-note="1" style="left: 8.5%;"><span>C#</span></div>
-            <div class="piano-key black" data-note="3" style="left: 21%;"><span>D#</span></div>
-            <div class="piano-key black" data-note="6" style="left: 46%;"><span>F#</span></div>
-            <div class="piano-key black" data-note="8" style="left: 58.5%;"><span>G#</span></div>
-            <div class="piano-key black" data-note="10" style="left: 71%;"><span>A#</span></div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Calculator View -->
-    <main id="viewCalc" class="view">
-      <section class="glass-card">
-        <div class="calc-screen">
-          <div id="calcExpr" class="calc-expr"></div>
-          <div id="calcAns" class="calc-ans">0</div>
-        </div>
-        <div class="calc-pad">
-          <button class="btn clear" onclick="calcInput('clear')">AC</button>
-          <button class="btn clear" onclick="calcInput('backspace')">⌫</button>
-          <button class="btn func" onclick="calcInput('percent')">%</button>
-          <button class="btn op" onclick="calcInput('/')">÷</button>
-
-          <button class="btn num" onclick="calcInput('7')">7</button>
-          <button class="btn num" onclick="calcInput('8')">8</button>
-          <button class="btn num" onclick="calcInput('9')">9</button>
-          <button class="btn op" onclick="calcInput('*')">×</button>
-
-          <button class="btn num" onclick="calcInput('4')">4</button>
-          <button class="btn num" onclick="calcInput('5')">5</button>
-          <button class="btn num" onclick="calcInput('6')">6</button>
-          <button class="btn op" onclick="calcInput('-')">−</button>
-
-          <button class="btn num" onclick="calcInput('1')">1</button>
-          <button class="btn num" onclick="calcInput('2')">2</button>
-          <button class="btn num" onclick="calcInput('3')">3</button>
-          <button class="btn op" onclick="calcInput('+')">+</button>
-
-          <button class="btn func" onclick="calcInput('plusminus')">±</button>
-          <button class="btn num" onclick="calcInput('0')">0</button>
-          <button class="btn num" onclick="calcInput('.')">.</button>
-          <button class="btn equal" onclick="calcInput('equals')">=</button>
-        </div>
-      </section>
-    </main>
+<div class="container">
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtnPiano" onclick="switchTab('piano')">Piano</button>
+    <button class="tab-btn" id="tabBtnCalc" onclick="switchTab('calc')">Calculator</button>
   </div>
 
-  <script>
-    /* TAB NAVIGATION */
-    function switchTab(name) {
-      document.getElementById('tabPiano').classList.toggle('active', name === 'piano');
-      document.getElementById('tabCalc').classList.toggle('active', name === 'calc');
-      document.getElementById('viewPiano').classList.toggle('active', name === 'piano');
-      document.getElementById('viewCalc').classList.toggle('active', name === 'calc');
-    }
+  <!-- PIANO TAB -->
+  <div id="tabPiano" class="tab-content active">
+    <div class="piano-controls">
+      <div class="pill-group" id="waveforms">
+        <button class="pill-btn active" onclick="setWaveform('sine', this)">Sine</button>
+        <button class="pill-btn" onclick="setWaveform('square', this)">Square</button>
+        <button class="pill-btn" onclick="setWaveform('triangle', this)">Triangle</button>
+      </div>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button class="oct-btn" onclick="changeOctave(-1)">- Oct</button>
+        <span id="octaveLabel" style="font-size: 13px; font-weight: 700; color: var(--lime); min-width: 32px; text-align: center;">Oct 4</span>
+        <button class="oct-btn" onclick="changeOctave(1)">+ Oct</button>
+      </div>
+    </div>
 
-    /* AUDIO SYNTHESIZER */
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    let audioCtx = null;
-    let currentOctave = 4;
-    const activeNotes = {};
-    let isRecording = false;
-    let recordedEvents = [];
-    let recStartTime = 0;
-    let isPlayingBack = false;
+    <div class="record-strip">
+      <button id="recBtn" class="rec-btn" onclick="toggleRecord()">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:currentColor;"></span>
+        <span id="recText">Record</span>
+      </button>
+      <span id="recStatus" style="font-size: 12px; color: #888;">0 notes</span>
+      <button id="playBtn" class="play-seq-btn" onclick="playSequence()" disabled>Play</button>
+    </div>
 
-    function getAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new AudioContextClass();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      return audioCtx;
-    }
+    <!-- 13 Keys Container (C to C) -->
+    <div class="piano-wrap" id="pianoWrap">
+      <div class="white-keys">
+        <div class="key-white" data-semitone="0"><span>C</span></div>
+        <div class="key-white" data-semitone="2"><span>D</span></div>
+        <div class="key-white" data-semitone="4"><span>E</span></div>
+        <div class="key-white" data-semitone="5"><span>F</span></div>
+        <div class="key-white" data-semitone="7"><span>G</span></div>
+        <div class="key-white" data-semitone="9"><span>A</span></div>
+        <div class="key-white" data-semitone="11"><span>B</span></div>
+        <div class="key-white" data-semitone="12"><span>C</span></div>
+      </div>
+      <div class="black-keys">
+        <div class="key-black" style="left: 8.75%;" data-semitone="1"><span>C#</span></div>
+        <div class="key-black" style="left: 21.25%;" data-semitone="3"><span>D#</span></div>
+        <div class="key-black" style="left: 46.25%;" data-semitone="6"><span>F#</span></div>
+        <div class="key-black" style="left: 58.75%;" data-semitone="8"><span>G#</span></div>
+        <div class="key-black" style="left: 71.25%;" data-semitone="10"><span>A#</span></div>
+      </div>
+    </div>
+  </div>
 
-    function changeOctave(delta) {
-      currentOctave = Math.max(2, Math.min(6, currentOctave + delta));
-      document.getElementById('octaveDisplay').textContent = currentOctave;
-    }
+  <!-- CALCULATOR TAB -->
+  <div id="tabCalc" class="tab-content">
+    <div class="calc-display">
+      <div class="calc-expr" id="calcExpr"></div>
+      <div class="calc-val" id="calcVal">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="btn calc-btn clear" onclick="calcInput('AC')">AC</button>
+      <button class="btn calc-btn action" onclick="calcInput('±')">±</button>
+      <button class="btn calc-btn action" onclick="calcInput('%')">%</button>
+      <button class="btn calc-btn op" onclick="calcInput('÷')">÷</button>
 
-    function startNote(noteIdx) {
-      const ctx = getAudioContext();
-      if (activeNotes[noteIdx]) return;
+      <button class="btn calc-btn" onclick="calcInput('7')">7</button>
+      <button class="btn calc-btn" onclick="calcInput('8')">8</button>
+      <button class="btn calc-btn" onclick="calcInput('9')">9</button>
+      <button class="btn calc-btn op" onclick="calcInput('×')">×</button>
 
-      const wave = document.getElementById('waveform').value;
-      const freq = 440 * Math.pow(2, (noteIdx - 9 + (currentOctave - 4) * 12) / 12);
+      <button class="btn calc-btn" onclick="calcInput('4')">4</button>
+      <button class="btn calc-btn" onclick="calcInput('5')">5</button>
+      <button class="btn calc-btn" onclick="calcInput('6')">6</button>
+      <button class="btn calc-btn op" onclick="calcInput('-')">−</button>
 
+      <button class="btn calc-btn" onclick="calcInput('1')">1</button>
+      <button class="btn calc-btn" onclick="calcInput('2')">2</button>
+      <button class="btn calc-btn" onclick="calcInput('3')">3</button>
+      <button class="btn calc-btn op" onclick="calcInput('+')">+</button>
+
+      <button class="btn calc-btn" onclick="calcInput('0')">0</button>
+      <button class="btn calc-btn" onclick="calcInput('.')">.</button>
+      <button class="btn calc-btn action" onclick="calcInput('⌫')">⌫</button>
+      <button class="btn calc-btn eq" onclick="calcInput('=')">=</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Tab switching */
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  if (tab === 'piano') {
+    document.getElementById('tabBtnPiano').classList.add('active');
+    document.getElementById('tabPiano').classList.add('active');
+  } else {
+    document.getElementById('tabBtnCalc').classList.add('active');
+    document.getElementById('tabCalc').classList.add('active');
+  }
+}
+
+/* Audio Context Setup */
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+let currentWaveform = 'sine';
+let currentOctave = 4;
+const activeVoices = new Map(); // pointerId -> { osc, gain, semitone, el }
+
+function setWaveform(type, btn) {
+  currentWaveform = type;
+  document.querySelectorAll('#waveforms .pill-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function changeOctave(delta) {
+  currentOctave = Math.max(1, Math.min(7, currentOctave + delta));
+  document.getElementById('octaveLabel').textContent = 'Oct ' + currentOctave;
+}
+
+function getFrequency(semitone, octave) {
+  const midiNote = (octave + 1) * 12 + semitone;
+  return 440 * Math.pow(2, (midiNote - 69) / 12);
+}
+
+/* Recording System */
+let isRecording = false;
+let recordEvents = [];
+let recordStartTime = 0;
+
+function toggleRecord() {
+  const recBtn = document.getElementById('recBtn');
+  const recText = document.getElementById('recText');
+  const playBtn = document.getElementById('playBtn');
+  const status = document.getElementById('recStatus');
+
+  if (!isRecording) {
+    isRecording = true;
+    recordEvents = [];
+    recordStartTime = performance.now();
+    recBtn.classList.add('recording');
+    recText.textContent = 'Stop';
+    playBtn.disabled = true;
+    status.textContent = 'Recording...';
+  } else {
+    isRecording = false;
+    recBtn.classList.remove('recording');
+    recText.textContent = 'Record';
+    playBtn.disabled = recordEvents.length === 0;
+    status.textContent = recordEvents.length + ' notes';
+  }
+}
+
+function playSequence() {
+  if (recordEvents.length === 0) return;
+  const playBtn = document.getElementById('playBtn');
+  playBtn.disabled = true;
+
+  const ctx = getAudioContext();
+  recordEvents.forEach(evt => {
+    setTimeout(() => {
+      const freq = getFrequency(evt.semitone, evt.octave);
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = wave;
+      osc.type = evt.waveform;
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.02);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + evt.duration);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
+      osc.stop(ctx.currentTime + evt.duration);
 
-      activeNotes[noteIdx] = { osc, gain };
-
-      const keyEl = document.querySelector(`.piano-key[data-note="${noteIdx}"]`);
-      if (keyEl) keyEl.classList.add('active');
-
-      if (isRecording) {
-        recordedEvents.push({ type: 'down', note: noteIdx, time: performance.now() - recStartTime });
+      const keyEl = document.querySelector(`[data-semitone="${evt.semitone}"]`);
+      if (keyEl) {
+        keyEl.classList.add('active');
+        setTimeout(() => keyEl.classList.remove('active'), evt.duration * 1000);
       }
+    }, evt.time);
+  });
+
+  const lastEvent = recordEvents[recordEvents.length - 1];
+  const totalDuration = (lastEvent.time + lastEvent.duration * 1000) + 100;
+  setTimeout(() => {
+    playBtn.disabled = false;
+  }, totalDuration);
+}
+
+/* Note Play / Stop for Piano */
+function startNote(semitone, pointerId, element) {
+  const ctx = getAudioContext();
+  const freq = getFrequency(semitone, currentOctave);
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = currentWaveform;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+  gain.gain.setValueAtTime(0.001, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.015);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+
+  element.classList.add('active');
+  activeVoices.set(pointerId, {
+    osc,
+    gain,
+    semitone,
+    octave: currentOctave,
+    waveform: currentWaveform,
+    element,
+    startTime: performance.now()
+  });
+}
+
+function stopNote(pointerId) {
+  const voice = activeVoices.get(pointerId);
+  if (!voice) return;
+  const ctx = getAudioContext();
+  const now = ctx.currentTime;
+  voice.gain.gain.cancelScheduledValues(now);
+  voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
+  voice.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+  voice.osc.stop(now + 0.13);
+  voice.element.classList.remove('active');
+
+  if (isRecording) {
+    const noteDuration = Math.max(0.08, (performance.now() - voice.startTime) / 1000);
+    recordEvents.push({
+      semitone: voice.semitone,
+      octave: voice.octave,
+      waveform: voice.waveform,
+      time: voice.startTime - recordStartTime,
+      duration: noteDuration
+    });
+    document.getElementById('recStatus').textContent = recordEvents.length + ' notes';
+  }
+  activeVoices.delete(pointerId);
+}
+
+/* Multi-touch Piano Event Handlers */
+const pianoWrap = document.getElementById('pianoWrap');
+function handlePointerDown(e) {
+  const key = e.target.closest('[data-semitone]');
+  if (!key) return;
+  e.preventDefault();
+  const semitone = parseInt(key.getAttribute('data-semitone'), 10);
+  startNote(semitone, e.pointerId, key);
+}
+
+function handlePointerUp(e) {
+  if (activeVoices.has(e.pointerId)) {
+    e.preventDefault();
+    stopNote(e.pointerId);
+  }
+}
+
+pianoWrap.addEventListener('pointerdown', handlePointerDown);
+pianoWrap.addEventListener('pointerup', handlePointerUp);
+pianoWrap.addEventListener('pointercancel', handlePointerUp);
+pianoWrap.addEventListener('pointerleave', handlePointerUp);
+
+/* CALCULATOR LOGIC */
+let calcState = {
+  display: '0',
+  expression: '',
+  resetOnNext: false,
+  error: false
+};
+
+function updateCalcUI() {
+  const exprEl = document.getElementById('calcExpr');
+  const valEl = document.getElementById('calcVal');
+  exprEl.textContent = calcState.expression;
+  valEl.textContent = calcState.display;
+  if (calcState.error) {
+    valEl.classList.add('error');
+  } else {
+    valEl.classList.remove('error');
+  }
+}
+
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(20); } catch (e) {}
+  }
+}
+
+function calcInput(token) {
+  triggerHaptic();
+  if (calcState.error && token !== 'AC') {
+    return;
+  }
+
+  if (token >= '0' && token <= '9') {
+    if (calcState.resetOnNext || calcState.display === '0') {
+      calcState.display = token;
+      calcState.resetOnNext = false;
+    } else {
+      if (calcState.display.length < 14) calcState.display += token;
     }
-
-    function stopNote(noteIdx) {
-      if (!activeNotes[noteIdx]) return;
-      const { osc, gain } = activeNotes[noteIdx];
-      const ctx = getAudioContext();
-      const now = ctx.currentTime;
-
-      gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-      setTimeout(() => {
-        try { osc.stop(); osc.disconnect(); } catch (e) {}
-      }, 140);
-
-      delete activeNotes[noteIdx];
-
-      const keyEl = document.querySelector(`.piano-key[data-note="${noteIdx}"]`);
-      if (keyEl) keyEl.classList.remove('active');
-
-      if (isRecording) {
-        recordedEvents.push({ type: 'up', note: noteIdx, time: performance.now() - recStartTime });
-      }
+  } else if (token === '.') {
+    if (calcState.resetOnNext) {
+      calcState.display = '0.';
+      calcState.resetOnNext = false;
+    } else if (!calcState.display.includes('.')) {
+      calcState.display += '.';
     }
-
-    /* TOUCH / MOUSE HANDLING */
-    const pianoBoard = document.getElementById('pianoBoard');
-    const pointerMap = {};
-
-    pianoBoard.addEventListener('pointerdown', (e) => {
-      const key = e.target.closest('.piano-key');
-      if (!key) return;
-      const note = parseInt(key.getAttribute('data-note'), 10);
-      pointerMap[e.pointerId] = note;
-      startNote(note);
-      e.preventDefault();
-    });
-
-    pianoBoard.addEventListener('pointerup', (e) => {
-      if (pointerMap[e.pointerId] !== undefined) {
-        stopNote(pointerMap[e.pointerId]);
-        delete pointerMap[e.pointerId];
-      }
-    });
-
-    pianoBoard.addEventListener('pointercancel', (e) => {
-      if (pointerMap[e.pointerId] !== undefined) {
-        stopNote(pointerMap[e.pointerId]);
-        delete pointerMap[e.pointerId];
-      }
-    });
-
-    /* RECORD & PLAY */
-    function toggleRecord() {
-      const recBtn = document.getElementById('recBtn');
-      const playBtn = document.getElementById('playBtn');
-      const status = document.getElementById('recStatus');
-
-      if (!isRecording) {
-        isRecording = true;
-        recordedEvents = [];
-        recStartTime = performance.now();
-        recBtn.classList.add('recording');
-        recBtn.textContent = '■ Stop';
-        playBtn.disabled = true;
-        status.textContent = 'Recording...';
+  } else if (token === 'AC') {
+    calcState.display = '0';
+    calcState.expression = '';
+    calcState.resetOnNext = false;
+    calcState.error = false;
+  } else if (token === '⌫') {
+    if (calcState.display.length > 1) {
+      calcState.display = calcState.display.slice(0, -1);
+    } else {
+      calcState.display = '0';
+    }
+  } else if (token === '±') {
+    if (calcState.display !== '0') {
+      if (calcState.display.startsWith('-')) {
+        calcState.display = calcState.display.slice(1);
       } else {
-        isRecording = false;
-        recBtn.classList.remove('recording');
-        recBtn.textContent = '● Record';
-        playBtn.disabled = recordedEvents.length === 0;
-        status.textContent = recordedEvents.length ? `${Math.round(recordedEvents[recordedEvents.length - 1].time / 100) / 10}s recorded` : 'Empty';
+        calcState.display = '-' + calcState.display;
       }
     }
+  } else if (token === '%') {
+    const num = parseFloat(calcState.display) / 100;
+    calcState.display = String(num);
+    calcState.resetOnNext = true;
+  } else if (['+', '-', '×', '÷'].includes(token)) {
+    calcState.expression = calcState.display + ' ' + token;
+    calcState.resetOnNext = true;
+  } else if (token === '=') {
+    if (calcState.expression) {
+      const parts = calcState.expression.split(' ');
+      const op = parts[1];
+      const a = parseFloat(parts[0]);
+      const b = parseFloat(calcState.display);
+      let res = 0;
 
-    function playRecording() {
-      if (isPlayingBack || recordedEvents.length === 0) return;
-      isPlayingBack = true;
-      const playBtn = document.getElementById('playBtn');
-      const status = document.getElementById('recStatus');
-      playBtn.classList.add('playing');
-      status.textContent = 'Playing...';
+      if (op === '÷' && b === 0) {
+        calcState.error = true;
+        calcState.display = 'Cannot divide by 0';
+        calcState.expression = '';
+        updateCalcUI();
+        return;
+      }
 
-      recordedEvents.forEach((ev) => {
-        setTimeout(() => {
-          if (ev.type === 'down') startNote(ev.note);
-          else stopNote(ev.note);
-        }, ev.time);
-      });
+      switch (op) {
+        case '+': res = a + b; break;
+        case '-': res = a - b; break;
+        case '×': res = a * b; break;
+        case '÷': res = a / b; break;
+        default: res = b;
+      }
 
-      const totalTime = recordedEvents[recordedEvents.length - 1].time + 300;
-      setTimeout(() => {
-        isPlayingBack = false;
-        playBtn.classList.remove('playing');
-        status.textContent = 'Done';
-      }, totalTime);
+      // Format answer cleanly
+      res = Math.round(res * 1e10) / 1e10;
+      calcState.expression = `${parts[0]} ${op} ${b} =`;
+      calcState.display = String(res);
+      calcState.resetOnNext = true;
     }
+  }
+  updateCalcUI();
+}
 
-    /* CALCULATOR ENGINE */
-    let calcExpression = '';
-    let calcCurrent = '0';
-    let shouldResetInput = false;
-
-    const exprEl = document.getElementById('calcExpr');
-    const ansEl = document.getElementById('calcAns');
-
-    function calcInput(val) {
-      if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (e) {}
-      }
-      ansEl.classList.remove('error');
-
-      if (val === 'clear') {
-        calcExpression = '';
-        calcCurrent = '0';
-        shouldResetInput = false;
-      } else if (val === 'backspace') {
-        if (calcCurrent.length > 1) {
-          calcCurrent = calcCurrent.slice(0, -1);
-        } else {
-          calcCurrent = '0';
-        }
-      } else if (val === 'plusminus') {
-        if (calcCurrent !== '0' && calcCurrent !== 'Error') {
-          calcCurrent = calcCurrent.startsWith('-') ? calcCurrent.slice(1) : '-' + calcCurrent;
-        }
-      } else if (val === 'percent') {
-        const num = parseFloat(calcCurrent);
-        if (!isNaN(num)) calcCurrent = String(num / 100);
-      } else if (['+', '-', '*', '/'].includes(val)) {
-        calcExpression = `${calcCurrent} ${val}`;
-        shouldResetInput = true;
-      } else if (val === 'equals') {
-        if (calcExpression && !calcExpression.includes('=')) {
-          const parts = calcExpression.split(' ');
-          const op = parts[1];
-          const a = parseFloat(parts[0]);
-          const b = parseFloat(calcCurrent);
-          let res = 0;
-
-          if (op === '/' && b === 0) {
-            calcAns.textContent = 'Error: Division by 0';
-            calcAns.classList.add('error');
-            calcExpression = '';
-            calcCurrent = '0';
-            return;
-          }
-
-          if (op === '+') res = a + b;
-          else if (op === '-') res = a - b;
-          else if (op === '*') res = a * b;
-          else if (op === '/') res = a / b;
-
-          res = Math.round(res * 100000000) / 100000000;
-          calcExpression = `${a} ${op} ${b} =`;
-          calcCurrent = String(res);
-          shouldResetInput = true;
-        }
-      } else {
-        if (calcCurrent === '0' || shouldResetInput) {
-          calcCurrent = val === '.' ? '0.' : val;
-          shouldResetInput = false;
-        } else {
-          if (val === '.' && calcCurrent.includes('.')) return;
-          calcCurrent += val;
-        }
-      }
-
-      exprEl.textContent = calcExpression;
-      ansEl.textContent = calcCurrent;
-    }
-
-    /* DESKTOP KEYBOARD LISTENERS */
-    window.addEventListener('keydown', (e) => {
-      const viewCalc = document.getElementById('viewCalc');
-      if (viewCalc.classList.contains('active')) {
-        if ((e.key >= '0' && e.key <= '9') || e.key === '.') calcInput(e.key);
-        else if (['+', '-', '*', '/'].includes(e.key)) calcInput(e.key);
-        else if (e.key === 'Enter' || e.key === '=') calcInput('equals');
-        else if (e.key === 'Backspace') calcInput('backspace');
-        else if (e.key === 'Escape') calcInput('clear');
-      }
-    });
-  </script>
+/* Physical Keyboard Support */
+window.addEventListener('keydown', (e) => {
+  if (document.getElementById('tabCalc').classList.contains('active')) {
+    if (e.key >= '0' && e.key <= '9') calcInput(e.key);
+    else if (e.key === '.') calcInput('.');
+    else if (e.key === '+') calcInput('+');
+    else if (e.key === '-') calcInput('-');
+    else if (e.key === '*') calcInput('×');
+    else if (e.key === '/') { e.preventDefault(); calcInput('÷'); }
+    else if (e.key === 'Enter' || e.key === '=') calcInput('=');
+    else if (e.key === 'Backspace') calcInput('⌫');
+    else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') calcInput('AC');
+    else if (e.key === '%') calcInput('%');
+  }
+});
+</script>
 </body>
 </html>
